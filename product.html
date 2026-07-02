@@ -1,0 +1,53 @@
+// ===== PRODUCTOS =====
+let productos = [];
+
+function agregarProducto() {
+    let producto = document.getElementById("producto").value;
+    let precio = document.getElementById("precio").value;
+
+    if (producto === "" || precio === "") {
+        alert("Complete todos los campos");
+        return;
+    }
+
+    productos.push({
+        nombre: producto,
+        precio: precio
+    });
+
+    mostrarProductos();
+
+    document.getElementById("producto").value = "";
+    document.getElementById("precio").value = "";
+}
+
+function mostrarProductos() {
+    let lista = document.getElementById("listaProductos");
+    lista.innerHTML = "";
+
+    productos.forEach((p, i) => {
+        lista.innerHTML += `
+            <li>
+                ${p.nombre} - $${p.precio}
+                <button onclick="editarProducto(${i})">Editar</button>
+                <button onclick="eliminarProducto(${i})">Eliminar</button>
+            </li>
+        `;
+    });
+}
+
+function editarProducto(indice) {
+    let nuevoNombre = prompt("Nuevo nombre:", productos[indice].nombre);
+    let nuevoPrecio = prompt("Nuevo precio:", productos[indice].precio);
+
+    if (nuevoNombre !== null && nuevoPrecio !== null) {
+        productos[indice].nombre = nuevoNombre;
+        productos[indice].precio = nuevoPrecio;
+        mostrarProductos();
+    }
+}
+
+function eliminarProducto(indice) {
+    productos.splice(indice, 1);
+    mostrarProductos();
+}
