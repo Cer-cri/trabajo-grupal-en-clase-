@@ -1,22 +1,228 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Login</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Facturación</title>
+    <!-- Cargamos los estilos de Bootstrap para que se vea ordenado y profesional -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Librería para convertir HTML a PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { padding: 20px; background-color: #f8f9fa; }
+        .modulo { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        #factura-pdf { padding: 30px; background: white; border: 1px solid #ddd; }
+    </style>
 </head>
 <body>
 
-<div class="login">
-    <h2>LOGIN</h2>
+<div class="container">
+    <h1 class="text-center mb-4">Sistema de Facturación Local</h1>
 
-    <input type="text" id="user" placeholder="Usuario">
-    <input type="password" id="pass" placeholder="Contraseña">
+    <div class="row">
+        <!-- SECCIÓN IZQUIERDA: CLIENTES E INVENTARIO -->
+        <div class="col-md-5">
+            <!-- 1. Gestión de Clientes -->
+            <div class="modulo">
+                <h3>1. Datos del Cliente</h3>
+                <div class="mb-2">
+                    <label class="form-label">Nombre:</label>
+                    <input type="text" id="cli-nombre" class="form-control" value="Juan Pérez">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Cédula / RUC:</label>
+                    <input type="text" id="cli-ruc" class="form-control" value="1712345678">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Dirección:</label>
+                    <input type="text" id="cli-direccion" class="form-control" value="Av. Central 123">
+                </div>
+                <button class="btn btn-primary w-100" onclick="cargarCliente()">Aplicar Cliente a Factura</button>
+            </div>
 
-    <button onclick="login()">Ingresar</button>
+            <!-- 2. Inventario de Productos -->
+            <div class="modulo">
+                <h3>2. Inventario (Agregar Productos)</h3>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Computadora Laptop</td>
+                            <td>$500.00</td>
+                            <td><button class="btn btn-success btn-sm" onclick="agregarProducto('Computadora Laptop', 500.00)">+</button></td>
+                        </tr>
+                        <tr>
+                            <td>Mouse Óptico</td>
+                            <td>$15.00</td>
+                            <td><button class="btn btn-success btn-sm" onclick="agregarProducto('Mouse Óptico', 15.00)">+</button></td>
+                        </tr>
+                        <tr>
+                            <td>Teclado Mecánico</td>
+                            <td>$45.00</td>
+                            <td><button class="btn btn-success btn-sm" onclick="agregarProducto('Teclado Mecánico', 45.00)">+</button></td>
+                        </tr>
+                        <td>
+    <button class="btn btn-success btn-sm"
+        onclick="agregarProducto('Monitor 24 pulgadas', 180.00)">
+        +
+    </button>
+</td>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-    <p id="msg"></p>
+        <!-- SECCIÓN DERECHA: VISTA PREVIA DE LA FACTURA Y BOTÓN PDF -->
+        <div class="col-md-7">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>3. Vista Previa de la Factura</h3>
+                <button class="btn btn-danger" onclick="descargarPDF()">📥 Descargar en PDF</button>
+            </div>
+
+            <!-- Este recuadro es lo que se convertirá en PDF -->
+            <div id="factura-pdf">
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <h2 class="text-primary">MI EMPRESA S.A.</h2>
+                        <p>RUC: 9999999999001<br>Telf: 0987654321</p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <h4>FACTURA</h4>
+                        <p class="text-danger fw-bold">Nº 001-001-000001</p>
+                        <p>Fecha: <span id="factura-fecha"></span></p>
+                    </div>
+                </div>
+
+                <div class="card mb-3 p-3 bg-light">
+                    <h5>Datos del Cliente:</h5>
+                    <p class="mb-1"><strong>Nombre:</strong> <span id="f-nombre">---</span></p>
+                    <p class="mb-1"><strong>RUC/Cédula:</strong> <span id="f-ruc">---</span></p>
+                    <p class="mb-1"><strong>Dirección:</strong> <span id="f-direccion">---</span></p>
+                </div>
+
+                <table class="table table-bordered text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Cant.</th>
+                            <th>Descripción</th>
+                            <th>P. Unitario</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detalle-factura">
+                        <!-- Aquí se meterán los productos dinámicamente -->
+                    </tbody>
+                </table>
+
+                <div class="row justify-content-end">
+                    <div class="col-5">
+                        <table class="table table-sm table-bordered">
+                            <tr>
+                                <th>Subtotal:</th>
+                                <td id="f-subtotal">$0.00</td>
+                            </tr>
+                            <tr>
+                                <th>IVA (15%):</th>
+                                <td id="f-iva">$0.00</td>
+                            </tr>
+                            <tr>
+                                <th class="table-active">Total a Pagar:</th>
+                                <td id="f-total" class="fw-bold text-success">$0.00</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div> <!-- Fin zona PDF -->
+        </div>
+    </div>
 </div>
 
-<script src="script.js"></script>
+<script>
+    // Variables globales para la factura actual
+    let productosFactura = [];
+    
+    // Poner la fecha de hoy automáticamente al cargar la página
+    document.getElementById('factura-fecha').innerText = new Date().toLocaleDateString();
+
+    // Función para pasar los datos del cliente a la factura
+    function cargarCliente() {
+        document.getElementById('f-nombre').innerText = document.getElementById('cli-nombre').value;
+        document.getElementById('f-ruc').innerText = document.getElementById('cli-ruc').value;
+        document.getElementById('f-direccion').innerText = document.getElementById('cli-direccion').value;
+    }
+
+    // Función para añadir productos del inventario a la tabla de la factura
+    function agregarProducto(nombre, precio) {
+        // Buscar si el producto ya existe en la lista para sumarle la cantidad
+        let productoExistente = productosFactura.find(p => p.nombre === nombre);
+
+        if (productoExistente) {
+            productoExistente.cantidad += 1;
+        } else {
+            productosFactura.push({
+                nombre: nombre,
+                precio: precio,
+                cantidad: 1
+            });
+        }
+        renderizarTabla();
+    }
+
+    // Dibuja la lista de productos y calcula los totales
+    function renderizarTabla() {
+        let tabla = document.getElementById('detalle-factura');
+        tabla.innerHTML = "";
+        let subtotal = 0;
+
+        productosFactura.forEach(p => {
+            let totalProducto = p.cantidad * p.precio;
+            subtotal += totalProducto;
+
+            let fila = `<tr>
+                <td>${p.cantidad}</td>
+                <td class="text-start">${p.nombre}</td>
+                <td>$${p.precio.toFixed(2)}</td>
+                <td>$${totalProducto.toFixed(2)}</td>
+            </tr>`;
+            tabla.innerHTML += fila;
+        });
+
+        // Cálculos de impuestos (ejemplo con IVA del 15%)
+        let iva = subtotal * 0.15;
+        let total = subtotal + iva;
+
+        // Mostrar en la vista
+        document.getElementById('f-subtotal').innerText = `$${subtotal.toFixed(2)}`;
+        document.getElementById('f-iva').innerText = `$${iva.toFixed(2)}`;
+        document.getElementById('f-total').innerText = `$${total.toFixed(2)}`;
+    }
+
+    // Función mágica para convertir la zona de la factura en PDF y descargarla
+    function descargarPDF() {
+        // Asegurarse de que el cliente esté cargado antes de imprimir
+        cargarCliente();
+        
+        const elemento = document.getElementById('factura-pdf');
+        
+        // Configuración del PDF
+        const opciones = {
+            margin:       10,
+            filename:     'Factura_' + document.getElementById('cli-ruc').value + '.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Ejecutar la descarga
+        html2pdf().set(opciones).from(elemento).save();
+    }
+</script>
+
 </body>
 </html>
